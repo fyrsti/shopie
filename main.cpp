@@ -8,6 +8,8 @@
 using namespace std;
 class Product;
 void show_product_list();
+void show_inventory();
+
 bool _validate_product_number(int pn);
 int _get_product_number();
 bool _check_account(int pcode);
@@ -32,6 +34,7 @@ enum ACTIONS
 
 int money{ 100 };
 vector<Product*> productCatalog;
+vector<Product*> inventory;
 
 
 class Product
@@ -66,6 +69,8 @@ public:
 void buy_product()
 {
 	show_product_list();
+	show_inventory();
+	cout << "\nYour account: " << money << "$\n";
 	int choice = _get_product_number();
 	if (_check_account(choice))
 	{
@@ -81,11 +86,12 @@ void buy_product()
 
 string _process_transaction(int pcode)
 {
-	string temp = productCatalog.at(pcode)->get_name();
-	money -= productCatalog.at(pcode)->get_price();
-	delete productCatalog.at(pcode);
+	inventory.push_back(productCatalog.at(pcode));
+	int temp = inventory.back()->get_price();
+	money -= temp;
+	inventory.back()->set_price(temp - temp / 10);
 	productCatalog.erase((productCatalog.begin() + pcode));
-	return temp;
+	return inventory.back()->get_name();
 }
 
 
@@ -111,16 +117,31 @@ bool _validate_product_number(int pn)
 
 void show_product_list()
 {
+	cout << "\n----- Shop Catalog -----" << endl;
 	if (productCatalog.empty())
 	{
-		cout << "There aren't any products in our shop, but you can take sell some ones for us.\n";
+		cout << "There aren't any products in our shop, but you can sell some ones for us.\n";
 		return;
 	}
 	for (int i = 0; i < productCatalog.size(); i++)
 	{
 		cout << i + 1 << ":\t" << productCatalog.at(i)->get_name() << "\t- " << productCatalog.at(i)->get_price() << "$\n";
 	}
-	cout << "\nYour account: " << money << "$\n";
+}
+
+
+void show_inventory()
+{
+	cout << "\n----- Your Inventory -----" << endl;
+	if (inventory.empty())
+	{
+		cout << "There aren't any products in your inventory, but you can buy some.\n";
+		return;
+	}
+	for (int i = 0; i < inventory.size(); i++)
+	{
+		cout << i + 1 << ":\t" << inventory.at(i)->get_name() << "\t- " << inventory.at(i)->get_price() << "$ for sell\n";
+	}
 }
 
 
@@ -155,6 +176,12 @@ void _add_products()
 void _delete_products()
 {
 	for (auto product : productCatalog)
+	{
+		if (product != nullptr)
+			delete product;
+	}
+
+	for (auto product : inventory)
 	{
 		if (product != nullptr)
 			delete product;
