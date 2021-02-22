@@ -7,10 +7,18 @@
 
 using namespace std;
 class Product;
+void show_product_list();
+bool _validate_product_number(int pn);
+int _get_product_number();
+bool _check_account(int pcode);
+string _process_transaction(int pcode);
 void buy_product();
 void sell_product();
 void earn_money();
 void try_to_steal();
+
+template <typename T>
+void input(string text, T& destination);
 
 
 enum ACTIONS
@@ -22,7 +30,7 @@ enum ACTIONS
 	STEAL
 };
 
-
+int money{ 100 };
 vector<Product*> productCatalog;
 
 
@@ -57,27 +65,79 @@ public:
 
 void buy_product()
 {
-	cout << "Not implemented" << endl;
+	show_product_list();
+	int choice = _get_product_number();
+	if (_check_account(choice))
+	{
+		cout << "Well, you've bought a " << _process_transaction(choice);
+		cout << ".\nNow, you account is " << money << "$\n";
+	}
+	else
+	{
+		cout << "You haven't enough money!" << endl;
+	}
+}
+
+
+string _process_transaction(int pcode)
+{
+	string temp = productCatalog.at(pcode)->get_name();
+	money -= productCatalog.at(pcode)->get_price();
+	delete productCatalog.at(pcode);
+	productCatalog.erase((productCatalog.begin() + pcode));
+	return temp;
+}
+
+
+bool _check_account(int pcode)
+{
+	return (productCatalog.at(pcode)->get_price() <= money ? true : false);
+}
+
+
+int _get_product_number()
+{
+	int pnumber{0};
+	while(!_validate_product_number(pnumber))
+		input("Enter the product code: ", pnumber);	
+	return pnumber - 1;
+}
+
+bool _validate_product_number(int pn)
+{
+	return (pn <= productCatalog.size() && pn >= 1 ? true : false);
+}
+
+
+void show_product_list()
+{
+	if (productCatalog.empty())
+	{
+		cout << "There aren't any products in our shop, but you can take sell some ones for us.\n";
+		return;
+	}
+	for (int i = 0; i < productCatalog.size(); i++)
+	{
+		cout << i + 1 << ":\t" << productCatalog.at(i)->get_name() << "\t- " << productCatalog.at(i)->get_price() << "$\n";
+	}
+	cout << "\nYour account: " << money << "$\n";
 }
 
 
 void sell_product()
 {
-	
 	cout << "Not implemented" << endl;
 }
 
 
 void earn_money()
 {
-
 	cout << "Not implemented" << endl;
 }
 
 
 void try_to_steal()
 {
-
 	cout << "Not implemented" << endl;
 }
 
@@ -113,9 +173,9 @@ void input(string text, T& destination)
 void controller()
 {
 	int a{-1};
-	cout << "1 - Buy\n2 - Sell\n3 - Earn\n4 - Steal\n";
 	while (true)
 	{
+		cout << "\n1 - Buy\n2 - Sell\n3 - Earn\n4 - Steal\n";
 		input("Choose the action: ", a);
 		switch (a)
 		{
@@ -140,8 +200,7 @@ void controller()
 
 
 int main()
-{
-	cout << "Hello" << endl; 
+{ 
 	_add_products();
 	controller();
 	_delete_products();
