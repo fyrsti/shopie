@@ -7,13 +7,12 @@
 
 using namespace std;
 class Product;
-void show_product_list();
-void show_inventory();
+void show_information();
 
-bool _validate_product_number(int pn);
-int _get_product_number();
+bool _validate_product_number(int pn, vector<Product*> catlg);
+int _get_product_number(vector<Product*> catlg);
 bool _check_account(int pcode);
-string _process_transaction(int pcode);
+string _process_transaction(int pcode, vector<Product*>& from, vector<Product*>& to);
 void buy_product();
 void sell_product();
 void earn_money();
@@ -32,7 +31,7 @@ enum ACTIONS
 	STEAL
 };
 
-int money{ 100 };
+int money{ 1000 };
 vector<Product*> productCatalog;
 vector<Product*> inventory;
 
@@ -40,10 +39,11 @@ vector<Product*> inventory;
 class Product
 {
 private:
-	int price_;
+	const int price_;
+	int current_price;
 	string name_;
 public:
-	Product(string name, int price) : price_(price), name_(name)
+	Product(string name, int price) : price_(price), name_(name), current_price(price)
 	{}
 
 	Product(string name) : Product(name, 0)
@@ -59,95 +59,105 @@ public:
 		return price_;
 	}
 
+	int get_current_price()
+	{
+		return current_price;
+	}
+
+	bool compare_prices()
+	{
+		return (current_price == price_ ? true : false);
+	}
+
 	void set_price(int value)
 	{
-		price_ = value;
+		current_price = value;
 	}
 };
 
-
-void buy_product()
+// Переделать механизм использования брать продукт from и передавать в to
+string _process_transaction(int pcode, vector<Product*>& from, vector<Product*>& to)
 {
-	show_product_list();
-	show_inventory();
-	cout << "\nYour account: " << money << "$\n";
-	int choice = _get_product_number();
-	if (_check_account(choice))
+	// Перемещает объект класса Product из одного вектора в другой
+	to.push_back(from.at(pcode));
+	int temp = to.back()->get_current_price();
+	if (to.back()->compare_prices())
 	{
-		cout << "Well, you've bought a " << _process_transaction(choice);
-		cout << ".\nNow, you account is " << money << "$\n";
+		money -= temp;
+		to.back()->set_price(temp - temp / 10);
 	}
 	else
 	{
-		cout << "You haven't enough money!" << endl;
+		money += temp;
+		to.back()->set_price(to.back()->get_price());
 	}
-}
-
-
-string _process_transaction(int pcode)
-{
-	inventory.push_back(productCatalog.at(pcode));
-	int temp = inventory.back()->get_price();
-	money -= temp;
-	inventory.back()->set_price(temp - temp / 10);
-	productCatalog.erase((productCatalog.begin() + pcode));
-	return inventory.back()->get_name();
+	from.erase((from.begin() + pcode));
+	return to.back()->get_name();
 }
 
 
 bool _check_account(int pcode)
 {
-	return (productCatalog.at(pcode)->get_price() <= money ? true : false);
+	return (productCatalog.at(pcode)->get_current_price() <= money ? true : false);
 }
 
 
-int _get_product_number()
+int _get_product_number(vector<Product*> catlg)
 {
-	int pnumber{0};
-	while(!_validate_product_number(pnumber))
-		input("Enter the product code: ", pnumber);	
-	return pnumber - 1;
+	int pnumber{-1};
+	input("Enter the product code: ", pnumber);
+	if (_validate_product_number(pnumber, catlg))
+		return pnumber - 1;
+	else
+		return -1;
 }
 
-bool _validate_product_number(int pn)
+bool _validate_product_number(int pn, vector<Product*> catlg)
 {
-	return (pn <= productCatalog.size() && pn >= 1 ? true : false);
+	return (pn <= catlg.size() && pn >= 1 ? true : false);
 }
 
 
-void show_product_list()
+void show_information()
 {
 	cout << "\n----- Shop Catalog -----" << endl;
-	if (productCatalog.empty())
-	{
-		cout << "There aren't any products in our shop, but you can sell some ones for us.\n";
-		return;
-	}
 	for (int i = 0; i < productCatalog.size(); i++)
 	{
-		cout << i + 1 << ":\t" << productCatalog.at(i)->get_name() << "\t- " << productCatalog.at(i)->get_price() << "$\n";
+		cout << i + 1 << ":\t" << productCatalog.at(i)->get_name() << "\t- " << productCatalog.at(i)->get_current_price() << "$\n";
 	}
+
+	cout << "\n----- Your Inventory -----" << endl;
+	for (int i = 0; i < inventory.size(); i++)
+	{
+		cout << i + 1 << ":\t" << inventory.at(i)->get_name() << "\t- " << inventory.at(i)->get_current_price() << "$ for sell\n";
+	}
+
+	cout << "\nYour account: " << money << "$\n";
 }
 
 
-void show_inventory()
+void buy_product()
 {
-	cout << "\n----- Your Inventory -----" << endl;
-	if (inventory.empty())
-	{
-		cout << "There aren't any products in your inventory, but you can buy some.\n";
+	int choice = _get_product_number(productCatalog);
+	if (choice == -1)
 		return;
-	}
-	for (int i = 0; i < inventory.size(); i++)
+	if (_check_account(choice))
 	{
-		cout << i + 1 << ":\t" << inventory.at(i)->get_name() << "\t- " << inventory.at(i)->get_price() << "$ for sell\n";
+		cout << "Well, you've bought a " << _process_transaction(choice, productCatalog, inventory);
+		cout << ".\nNow, you account is " << money << "$\n";
 	}
+	else
+		cout << "You haven't enough money!" << endl;
 }
 
 
 void sell_product()
 {
-	cout << "Not implemented" << endl;
+	int choice = _get_product_number(inventory);
+	if (choice == -1)
+		return;
+	cout << "Nice, you've just sold a " << _process_transaction(choice , inventory, productCatalog);
+	cout << "\nNow, your acconut is " << money << "$\n";
 }
 
 
@@ -207,10 +217,22 @@ void controller()
 		switch (a)
 		{
 		case BUY:
-			buy_product();
+			if (productCatalog.empty())
+				cout << "There aren't any products in our shop, but you can sell some ones for us.\n";
+			else
+			{
+				show_information();
+				buy_product();	
+			}
 			break;
 		case SELL:
-			sell_product();
+			if (inventory.empty())
+				cout << "There aren't any products in your inventory, but you can buy some.\n";
+			else
+			{
+				show_information();
+				sell_product();
+			}
 			break;
 		case EARN:
 			earn_money();
