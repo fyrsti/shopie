@@ -16,7 +16,7 @@ int _get_answer();
 void visualize_math_problems(int delta, int omega, vector<int> base);
 int _get_product_number(vector<Product*> catlg);
 bool _check_account(int pcode);
-string _process_transaction(int pcode, vector<Product*>& from, vector<Product*>& to);
+string _transfer_items(int pcode, vector<Product*>& from, vector<Product*>& to);
 bool _antirepeat(vector<int> v, int target);
 void buy_product();
 void sell_product();
@@ -81,23 +81,23 @@ public:
 };
 
 // Разграничить перевод денег и перевод продуктов
-string _process_transaction(int pcode, vector<Product*>& from, vector<Product*>& to)
+string _transfer_items(int pcode, vector<Product*>& from, vector<Product*>& to)
 {
 	// Перемещает объект класса Product из одного вектора в другой
 	to.push_back(from.at(pcode));
 	int temp = to.back()->get_current_price();
 	if (to.back()->compare_prices())
-	{
-		money -= temp;
 		to.back()->set_price(temp - temp / 4);
-	}
 	else
-	{
-		money += temp;
 		to.back()->set_price(to.back()->get_price());
-	}
 	from.erase((from.begin() + pcode));
 	return to.back()->get_name();
+}
+
+
+void _money_transaction(int value, int odd)
+{
+	money -= value * pow(-1, odd);
 }
 
 
@@ -151,7 +151,8 @@ void buy_product()
 		return;
 	if (_check_account(choice))
 	{
-		cout << "Well, you've bought a " << _process_transaction(choice, productCatalog, inventory);
+		_money_transaction(productCatalog.at(choice)->get_current_price(), 0);
+		cout << "Well, you've bought a " << _transfer_items(choice, productCatalog, inventory);
 		cout << ".\nNow, you account is " << money << "$\n";
 	}
 	else
@@ -164,7 +165,8 @@ void sell_product()
 	int choice = _get_product_number(inventory);
 	if (choice == -1)
 		return;
-	cout << "Nice, you've just sold a " << _process_transaction(choice , inventory, productCatalog);
+	_money_transaction(inventory.at(choice)->get_current_price(), 1);
+	cout << "Nice, you've just sold a " << _transfer_items(choice , inventory, productCatalog);
 	cout << "\nNow, your acconut is " << money << "$\n";
 }
 
@@ -321,12 +323,13 @@ void try_to_steal()
 	// 4
 	if (result)
 	{
-		_process_transaction(choice, productCatalog, inventory);
+		_transfer_items(choice, productCatalog, inventory);
 		cout << "Wow, we did it!" << endl;
 	}
 	else
 	{
 		cout << "COPS!" << endl;
+		exit(0);
 	}
 }
 
