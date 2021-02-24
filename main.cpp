@@ -16,6 +16,8 @@ int _get_answer();
 void visualize_math_problems(int delta, int omega, vector<int> base);
 int _get_product_number(vector<Product*> catlg);
 bool _check_account(int pcode);
+int _get_max_price();
+int _calculate_chance(int ch);
 string _transfer_items(int pcode, vector<Product*>& from, vector<Product*>& to);
 bool _antirepeat(vector<int> v, int target);
 void buy_product();
@@ -298,41 +300,43 @@ void earn_salary()
 void try_to_steal()
 {
 	cout << "Damn, you're going to do something mad, aren't you?" << endl;
-	int max{ 0 };
 	int choice = _get_product_number(productCatalog);
 	if (choice == -1)
 		return;
-	
-	// 1
-	for (auto el : productCatalog)
-	{
-		if (el->get_current_price() > max)
-			max = el->get_current_price();
-	}
-
-	// 2
-	int chance = 100 - (productCatalog.at(choice)->get_current_price() / max * 100);
-	if (chance < 10)
-		chance = 10;
-	else if (chance > 90)
-		chance = 90;
-
-	// 3
-	bool result = rand() % 100 + 1 > chance ? false : true;
-
-	// 4
-	if (result)
+	if (rand() % 100 + 1 > _calculate_chance(choice) ? false : true)
 	{
 		_transfer_items(choice, productCatalog, inventory);
 		cout << "Wow, we did it!" << endl;
 	}
 	else
 	{
-		cout << "COPS!" << endl;
+		cout << "F**K, COPS ARE THERE!" << endl;
 		exit(0);
 	}
 }
 
+
+int _calculate_chance(int ch)
+{
+	int chance = 100 - (productCatalog.at(ch)->get_current_price() / _get_max_price() * 100);
+	if (chance < 10)
+		return 10;
+	else if (chance > 90)
+		return 90;
+	return chance;
+}
+
+
+int _get_max_price()
+{
+	int max{ 0 };
+	for (auto el : productCatalog)
+	{
+		if (el->get_current_price() > max)
+			max = el->get_current_price();
+	}
+	return max;
+}
 
 void _add_products()
 {
