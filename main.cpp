@@ -3,6 +3,7 @@
 #include <map>
 #include <functional>
 #include <vector>
+#include <thread>
 #include <chrono>
 
 
@@ -24,6 +25,7 @@ void buy_product();
 void sell_product();
 void earn_salary();
 void try_to_steal();
+void timer(int& st);
 
 template <typename T>
 void input(string text, T& destination);
@@ -252,8 +254,15 @@ string construct_word()
 }
 
 
-void timer()
-{}
+void timer(int& st)
+{
+	for (int i = 0; i < 100; i++)
+	{
+		this_thread::sleep_for(chrono::milliseconds(100));
+		st++;
+	}
+	cout << "\n================\nStamina is well\n================\n";
+}
 
 
 int compare_words(string original, string user)
@@ -270,7 +279,6 @@ int repeat_word()
 {
 	string task = construct_word();
 	string response;
-	timer();
 	input("Repeat that: " + task + "\n:", response);
 	int correct = compare_words(task, response);
 	cout << "Correct answers " << correct << '/' << task.size() << endl;
@@ -345,6 +353,7 @@ void _add_products()
 	productCatalog.push_back(new Product("Banana", 45));
 	productCatalog.push_back(new Product("Nut", 15));
 	productCatalog.push_back(new Product("Carrot", 25));
+	productCatalog.push_back(new Product("Phone", 1000));
 }
 
 
@@ -375,6 +384,7 @@ void input(string text, T& destination)
 void controller()
 {
 	int a{-1};
+	int stamina{ 100 };
 	while (true)
 	{
 		cout << "\n1 - Buy\n2 - Sell\n3 - Earn\n4 - Steal\n";
@@ -400,7 +410,15 @@ void controller()
 			}
 			break;
 		case EARN:
-			earn_salary();
+			if (stamina == 100)
+			{
+				earn_salary();
+				stamina = 0;
+				thread th(timer, ref(stamina));
+				th.detach();
+			}
+			else
+				cout << "You're tired! Your stamina is " << stamina << "%\n";
 			break;
 		case STEAL:
 			if (productCatalog.empty())
