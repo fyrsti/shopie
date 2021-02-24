@@ -3,19 +3,24 @@
 #include <map>
 #include <functional>
 #include <vector>
+#include <chrono>
 
 
 using namespace std;
 class Product;
-void show_information();
 
-bool _validate_product_number(int pn, vector<Product*> catlg);
+void show_information();
+bool _validate_number_in_range(int pn, int max);
+void _preprocess_numbers(vector<int>& t, int& c, int& d);
+int _get_answer();
+void visualize_math_problems(int delta, int omega, vector<int> base);
 int _get_product_number(vector<Product*> catlg);
 bool _check_account(int pcode);
 string _process_transaction(int pcode, vector<Product*>& from, vector<Product*>& to);
+bool _antirepeat(vector<int> v, int target);
 void buy_product();
 void sell_product();
-void earn_money();
+void earn_salary();
 void try_to_steal();
 
 template <typename T>
@@ -31,7 +36,7 @@ enum ACTIONS
 	STEAL
 };
 
-int money{ 1000 };
+int money{ 0 };
 vector<Product*> productCatalog;
 vector<Product*> inventory;
 
@@ -84,7 +89,7 @@ string _process_transaction(int pcode, vector<Product*>& from, vector<Product*>&
 	if (to.back()->compare_prices())
 	{
 		money -= temp;
-		to.back()->set_price(temp - temp / 10);
+		to.back()->set_price(temp - temp / 4);
 	}
 	else
 	{
@@ -106,15 +111,15 @@ int _get_product_number(vector<Product*> catlg)
 {
 	int pnumber{-1};
 	input("Enter the product code: ", pnumber);
-	if (_validate_product_number(pnumber, catlg))
+	if (_validate_number_in_range(pnumber, catlg.size()))
 		return pnumber - 1;
 	else
 		return -1;
 }
 
-bool _validate_product_number(int pn, vector<Product*> catlg)
+bool _validate_number_in_range(int pn, int max)
 {
-	return (pn <= catlg.size() && pn >= 1 ? true : false);
+	return (pn <= max && pn >= 1 ? true : false);
 }
 
 
@@ -161,9 +166,128 @@ void sell_product()
 }
 
 
-void earn_money()
+// Дописать функцию + отрефакторить по принципу единой отвественности
+bool solve_math_problem()
 {
-	cout << "Not implemented" << endl;
+	vector<int> temp;
+	int choice, delta, response{ 0 };
+	_preprocess_numbers(temp, choice, delta);
+	visualize_math_problems(delta, temp.at(choice) - delta, temp);
+	return _get_answer() == choice + 1 ? true : false;
+}
+
+
+int _get_answer()
+{
+	int response{ 0 };
+	while (true)
+	{
+		input("Choose the correct answer: ", response);
+		if (_validate_number_in_range(response, 3))
+			return response;
+		else
+			cout << "This is not a correct answer" << endl;
+	}
+}
+
+
+void _preprocess_numbers(vector<int>& t, int& c, int& d)
+{
+	int iterations{ 0 };
+	d = rand() % 20;
+	while (true)
+	{
+		while (iterations < 3)
+		{
+			int temp = rand() % 30;
+			if (_antirepeat(t, temp))
+			{
+				iterations++;
+				t.push_back(temp);
+			}
+		}
+		c = rand() % 3;
+		if (d < t.at(c) - 5)
+			break;
+	}
+}
+
+
+bool _antirepeat(vector<int> v, int target)
+{
+	for (auto el : v)
+	{
+		if (el == target)
+			return false;
+	}
+	return true;
+}
+
+
+void visualize_math_problems(int delta, int omega, vector<int> base)
+{
+	cout << "How much is " << delta << " + " << omega << endl;
+	cout << "1: " << base.at(0) << endl;
+	cout << "2: " << base.at(1) << endl;
+	cout << "3: " << base.at(2) << endl;
+}
+
+
+string construct_word()
+{
+	string symbols{ "qwertyuiopasdfghjklzxcvbnm1234567890" };
+	string result;
+	int length = 7 + rand() % 5;
+	for (int i = 0; i < length; i++)
+	{
+		result.push_back(symbols.at(rand() % symbols.size()));
+	}
+	return result;
+}
+
+
+void timer()
+{}
+
+
+int compare_words(string original, string user)
+{
+	int correct{ 0 };
+	for (int i = 0; i < (original.size() >= user.size() ? user.size() : original.size()); i++)
+		if (original[i] == user[i])
+			correct++;
+	return correct;
+}
+
+
+int repeat_word()
+{
+	string task = construct_word();
+	string response;
+	timer();
+	input("Repeat that: " + task + "\n:", response);
+	int correct = compare_words(task, response);
+	cout << "Correct answers " << correct << '/' << task.size() << endl;
+	if (correct > 0)
+		return 100 * correct / task.size();
+	else
+		return 0;
+}
+
+
+void earn_salary()
+{
+	int salary{ 0 };
+	if (solve_math_problem())
+	{
+		salary += 50;
+		cout << "Right!" << endl;
+	}
+	else
+		cout << "Incorrect!" << endl;
+	salary += repeat_word();
+	cout << "\nYour salary is " << salary << endl;
+	money += salary;
 }
 
 
@@ -235,7 +359,7 @@ void controller()
 			}
 			break;
 		case EARN:
-			earn_money();
+			earn_salary();
 			break;
 		case STEAL:
 			try_to_steal();
@@ -249,7 +373,8 @@ void controller()
 
 
 int main()
-{ 
+{
+	srand(time(NULL));
 	_add_products();
 	controller();
 	_delete_products();
