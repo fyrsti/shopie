@@ -9,7 +9,7 @@
 using namespace std;
 class Product;
 
-void show_information();
+void show_information(bool hide = false);
 bool _validate_number_in_range(int pn, int max);
 void _preprocess_numbers(vector<int>& t, int& c, int& d);
 int _get_answer();
@@ -80,7 +80,7 @@ public:
 	}
 };
 
-// Переделать механизм использования брать продукт from и передавать в to
+// Разграничить перевод денег и перевод продуктов
 string _process_transaction(int pcode, vector<Product*>& from, vector<Product*>& to)
 {
 	// Перемещает объект класса Product из одного вектора в другой
@@ -123,13 +123,16 @@ bool _validate_number_in_range(int pn, int max)
 }
 
 
-void show_information()
+void show_information(bool hide)
 {
 	cout << "\n----- Shop Catalog -----" << endl;
 	for (int i = 0; i < productCatalog.size(); i++)
 	{
 		cout << i + 1 << ":\t" << productCatalog.at(i)->get_name() << "\t- " << productCatalog.at(i)->get_current_price() << "$\n";
 	}
+
+	if (hide)
+		return;
 
 	cout << "\n----- Your Inventory -----" << endl;
 	for (int i = 0; i < inventory.size(); i++)
@@ -166,7 +169,6 @@ void sell_product()
 }
 
 
-// Дописать функцию + отрефакторить по принципу единой отвественности
 bool solve_math_problem()
 {
 	vector<int> temp;
@@ -293,7 +295,39 @@ void earn_salary()
 
 void try_to_steal()
 {
-	cout << "Not implemented" << endl;
+	cout << "Damn, you're going to do something mad, aren't you?" << endl;
+	int max{ 0 };
+	int choice = _get_product_number(productCatalog);
+	if (choice == -1)
+		return;
+	
+	// 1
+	for (auto el : productCatalog)
+	{
+		if (el->get_current_price() > max)
+			max = el->get_current_price();
+	}
+
+	// 2
+	int chance = 100 - (productCatalog.at(choice)->get_current_price() / max * 100);
+	if (chance < 10)
+		chance = 10;
+	else if (chance > 90)
+		chance = 90;
+
+	// 3
+	bool result = rand() % 100 + 1 > chance ? false : true;
+
+	// 4
+	if (result)
+	{
+		_process_transaction(choice, productCatalog, inventory);
+		cout << "Wow, we did it!" << endl;
+	}
+	else
+	{
+		cout << "COPS!" << endl;
+	}
 }
 
 
@@ -362,7 +396,13 @@ void controller()
 			earn_salary();
 			break;
 		case STEAL:
-			try_to_steal();
+			if (productCatalog.empty())
+				cout << "There aren't any products in our shop to steal.\n";
+			else
+			{
+				show_information(true);
+				try_to_steal();
+			}
 			break;
 		default:
 			cout << "Don't waste my time! Get out!" << endl;
