@@ -5,30 +5,11 @@
 #include <vector>
 #include <thread>
 #include <chrono>
+#include "shopie.h"
 
 
 using namespace std;
-class Product;
 
-void show_information(bool hide = false);
-bool _validate_number_in_range(int pn, int max);
-void _preprocess_numbers(vector<int>& t, int& c, int& d);
-int _get_answer();
-void visualize_math_problems(int delta, int omega, vector<int> base);
-int _get_product_number(vector<Product*> catlg);
-bool _check_account(int pcode);
-int _get_max_price();
-int _calculate_chance(int ch);
-string _transfer_items(int pcode, vector<Product*>& from, vector<Product*>& to);
-bool _antirepeat(vector<int> v, int target);
-void buy_product();
-void sell_product();
-void earn_salary();
-void try_to_steal();
-void timer(int& st);
-
-template <typename T>
-void input(string text, T& destination);
 
 
 enum ACTIONS
@@ -39,10 +20,6 @@ enum ACTIONS
 	EARN,
 	STEAL
 };
-
-int money{ 0 };
-vector<Product*> productCatalog;
-vector<Product*> inventory;
 
 
 class Product
@@ -84,10 +61,9 @@ public:
 	}
 };
 
-// Разграничить перевод денег и перевод продуктов
+
 string _transfer_items(int pcode, vector<Product*>& from, vector<Product*>& to)
 {
-	// Перемещает объект класса Product из одного вектора в другой
 	to.push_back(from.at(pcode));
 	int temp = to.back()->get_current_price();
 	if (to.back()->compare_prices())
